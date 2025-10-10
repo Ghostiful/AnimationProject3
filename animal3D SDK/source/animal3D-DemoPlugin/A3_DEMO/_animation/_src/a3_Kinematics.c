@@ -103,7 +103,9 @@ static inline void a3kinematicsSolveInverseSingle(const a3_HierarchyState* hiera
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	a3real4x4Product(hierarchyState->localSpace->hpose_base[index].transformMat.m,
+		hierarchyState->objectSpaceInv->hpose_base[parentIndex].transformMat.m,
+		hierarchyState->objectSpace->hpose_base[index].transformMat.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -111,16 +113,17 @@ static inline void a3kinematicsSolveInverseSingle(const a3_HierarchyState* hiera
 }
 static inline void a3kinematicsSolveInverseRoot(const a3_HierarchyState* hierarchyState, const a3ui32 index)
 {
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
-//-----------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------
+	//****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
+	//-----------------------------------------------------------------------------
 
+	hierarchyState->localSpace->hpose_base[index] = hierarchyState->objectSpace->hpose_base[index];
 
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PROJECT-3
-//-----------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------
+	//****END-TO-DO-PROJECT-3
+	//-----------------------------------------------------------------------------
 }
+
 
 // partial IK solver
 a3i32 a3kinematicsSolveInversePartial(const a3_HierarchyState* hierarchyState, const a3ui32 firstIndex, const a3ui32 nodeCount)
@@ -138,14 +141,30 @@ a3i32 a3kinematicsSolveInversePartial(const a3_HierarchyState* hierarchyState, c
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+		a3ui32 i;
+		for (i = firstIndex; i < nodeCount; ++i)
+		{
+			if (hierarchyState->hierarchy->nodes[i].parentIndex < 0)
+			{
+				// we are root
+				a3kinematicsSolveInverseRoot(hierarchyState, hierarchyState->hierarchy->nodes[i].index);
+			}
+			else
+			{
+				// we are not root
+				a3kinematicsSolveInverseSingle(hierarchyState,
+					hierarchyState->hierarchy->nodes[i].index,
+					hierarchyState->hierarchy->nodes[i].parentIndex);
+			}
+		}
 
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PROJECT-3
-//-----------------------------------------------------------------------------
+		//-----------------------------------------------------------------------------
+		//****END-TO-DO-PROJECT-3
+		//-----------------------------------------------------------------------------
 	}
 	return -1;
 }
+
 
 
 //-----------------------------------------------------------------------------
@@ -194,13 +213,26 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+		a3kinematicsSolveInverse(activeHS); // Finally, do FK algorithm
+		a3hierarchyPoseRestore(
+			activeHS->localSpace, // GOAL: convert local pose description to matrix
+			activeHS->hierarchy->numNodes,
+			poseGroup->channel,
+			poseGroup->order
+		);
+		a3hierarchyPoseDeconcat(
+			activeHS->animPose, // GOAL: local pose = total of base and delta
+			activeHS->localSpace, // delta pose (from clip controller interpolation)
+			baseHS->localSpace, // precomputed base pose
+			activeHS->hierarchy->numNodes
+		);
 
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PROJECT-3
-//-----------------------------------------------------------------------------
+		//-----------------------------------------------------------------------------
+		//****END-TO-DO-PROJECT-3
+		//-----------------------------------------------------------------------------
 	}
 }
+
 
 void a3kinematicsUpdateHierarchyStateSkin(a3_HierarchyState* activeHS,
 	a3_HierarchyState const* baseHS)
@@ -270,7 +302,23 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+	// First step:
+	// transform everything into the space of the skeleton/hierarchy
+	// -> look at target
 
+	// Main step:
+	// solver: build an orthonormal basis (Joint-to-object)
+	//	1. direction basis = target - joint position
+	//	2. side basis = known up x direction basis
+	//	3. up basis = direction basis x side basis
+	//	4. normalize all
+
+	// Last step:
+	// resolve every affected joint:
+	// a3kinematicsResololvePostIK()
+
+	// Use basis functions
+	// Have to make fully up and down edge cases
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -302,7 +350,27 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+	// First step:
+	// transform everything into the space of the skeleton/hierarchy
+	// -> wrist effector
+	// -> pole vector constraint
 
+	// Main step:
+	// solve joint-object for end, hinge, base
+	//	-> end position*
+	//  -> hinge position*
+	// 1. base joint to end effector vector (and distance)
+	// 2. base joint to pole vector constraint
+	// 3. plane normal = base-to-pole x base-to-end
+	// 4. geometric (Heron's formula) or algebraic (law of cosines)
+	//	-> solves elbow position
+	// 5. "look at" solves shoulder and elbow rotations
+	// Geometric solution in slides
+
+	// Last step:
+	// resolve every affected joint:
+	//	-> work from root to leaf
+	// a3kinematicsResolvePostIK
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
