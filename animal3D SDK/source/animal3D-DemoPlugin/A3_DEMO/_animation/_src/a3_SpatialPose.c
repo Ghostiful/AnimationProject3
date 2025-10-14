@@ -101,6 +101,9 @@ a3i32 a3spatialPoseConvert(a3_SpatialPose* spatialPose, const a3_SpatialPoseChan
 	return -1;
 }
 
+extern float atan2f(float, float);
+extern float asinf(float);
+
 // restore single node pose from matrix
 a3i32 a3spatialPoseRestore(a3_SpatialPose* spatialPose, const a3_SpatialPoseChannel channel, const a3_SpatialPoseEulerOrder order)
 {

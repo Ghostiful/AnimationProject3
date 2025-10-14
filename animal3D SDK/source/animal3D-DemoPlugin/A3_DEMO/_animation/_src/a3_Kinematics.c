@@ -275,7 +275,9 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	/*a3real4x4Product(activeHS->localSpace->hpose_base[index].transformMat.m,
+		activeHS->objectSpaceInv->hpose_base[parentIndex].transformMat.m,
+		activeHS->objectSpace->hpose_base[index].transformMat.m);*/
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
