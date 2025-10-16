@@ -326,7 +326,8 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// Main step:
 	// solver: build an orthonormal basis (Joint-to-object)
 	//	1. direction basis = target - joint position
-	
+	a3vec4 effectorPos = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].translate;
+
 	//a3real4x4MakeLookAt()
 	//	2. side basis = known up x direction basis
 	//	3. up basis = direction basis x side basis
