@@ -326,11 +326,23 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// Main step:
 	// solver: build an orthonormal basis (Joint-to-object)
 	//	1. direction basis = target - joint position
-	a3vec4 effectorPos = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].translate;
+	a3vec4 effectorPos = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
+	a3vec4 jointPos = activeHS->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
+	a3vec4* directionBasis;
+	a3real4Diff(directionBasis, &effectorPos, &jointPos);
 
 	//a3real4x4MakeLookAt()
 	//	2. side basis = known up x direction basis
+	a3vec4 up = {0, 1, 0, 0};
+
+	a3vec4* sideBasis;
+	a3real3Cross(sideBasis, &up, directionBasis);
+
+
 	//	3. up basis = direction basis x side basis
+	a3vec4* upBasis;
+	a3real3Cross(upBasis, directionBasis, sideBasis);
+	
 	//	4. normalize all
 	
 
