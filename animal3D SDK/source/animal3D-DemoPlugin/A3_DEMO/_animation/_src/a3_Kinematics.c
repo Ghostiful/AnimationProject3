@@ -271,7 +271,7 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 
 	// post-IK resolution for single affected joint
 	//	-> reassign resolved transform to object-space
-	a3real3x3SetReal4x4(activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m, j2obj);
+	a3real4x4SetReal4x4(activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m, j2obj);
 
 	//	-> compute object-space inverse matrix
 	a3real4x4GetInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, j2obj);
@@ -283,7 +283,7 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 		activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m);
 
 	//	-> restore local-space matrix to pose
-	a3spatialPoseRestore(activeHS->localSpace->hpose_base + nodeIndex, poseGroup->channel, poseGroup->order);
+	a3spatialPoseRestore(activeHS->localSpace->hpose_base + nodeIndex, *poseGroup->channel, *poseGroup->order);
 
 	//	-> deconcatenate base pose
 	a3spatialPoseDeconcat(activeHS->animPose->hpose_base + nodeIndex, activeHS->localSpace->hpose_base + nodeIndex, baseHS->localSpace->hpose_base + nodeIndex);
