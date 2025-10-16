@@ -317,7 +317,7 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// transform everything into the space of the skeleton/hierarchy
 	// -> look at target
 
-	a3real4x4* worldToJointSpace = &activeHS->localSpaceInv->hpose_base[hierarchyObjIndex_affected].transformMat.m;
+	a3real4x4* worldToJointSpace = &sceneGraphState->localSpaceInv->hpose_base[sceneGraphIndex_hierarchyObj].transformMat.m;
 
 	// Put effector pos in joint space
 	a3vec4 effectorPosInJ;
@@ -352,9 +352,9 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	a3mat4 lookAt;
 
 	// -> Basis vectors
-	a3real4Set(lookAt.v2.v, sideBasis.x, sideBasis.y, sideBasis.z, 0);
+	a3real4Set(lookAt.v0.v, sideBasis.x, sideBasis.y, sideBasis.z, 0);
 	a3real4Set(lookAt.v1.v, upBasis.x, upBasis.y, upBasis.z, 0);
-	a3real4Set(lookAt.v0.v, directionBasis.x, directionBasis.y, directionBasis.z, 0);
+	a3real4Set(lookAt.v2.v, directionBasis.x, directionBasis.y, directionBasis.z, 0);
 
 	// -> Translation
 	a3real4Set(lookAt.v3.v, jointPos.x, jointPos.y, jointPos.z, 1);
