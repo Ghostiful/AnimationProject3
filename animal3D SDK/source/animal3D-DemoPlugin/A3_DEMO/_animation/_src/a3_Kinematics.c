@@ -317,8 +317,11 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// transform everything into the space of the skeleton/hierarchy
 	// -> look at target
 
-	a3real4x4 lookAt;
-	
+	a3real4x4* worldToJointSpace = activeHS->localSpaceInv->hpose_base[hierarchyObjIndex_affected].transformMat.m;
+
+	// Put effector pos in joint space
+	a3vec4 effectorPosInJ;
+	a3real4ProductTransform(effectorPosInJ.v, sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3.v, *worldToJointSpace);
 
 	//a3mat4 rigSpace = sceneGraphState->localSpace->hpose_base
 	//a3real3x3MakeLookAt
@@ -326,10 +329,9 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// Main step:
 	// solver: build an orthonormal basis (Joint-to-object)
 	//	1. direction basis = target - joint position
-	a3vec4 effectorPos = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
-	a3vec4 jointPos = activeHS->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
+	a3vec4 jointPos = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
 	a3vec4* directionBasis;
-	a3real4Diff(directionBasis, &effectorPos, &jointPos);
+	a3real4Diff(directionBasis, &effectorPosInJ, &jointPos);
 
 	//a3real4x4MakeLookAt()
 	//	2. side basis = known up x direction basis
