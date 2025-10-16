@@ -317,7 +317,7 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// transform everything into the space of the skeleton/hierarchy
 	// -> look at target
 
-	a3real4x4* worldToJointSpace = activeHS->localSpaceInv->hpose_base[hierarchyObjIndex_affected].transformMat.m;
+	a3real4x4* worldToJointSpace = &activeHS->localSpaceInv->hpose_base[hierarchyObjIndex_affected].transformMat.m;
 
 	// Put effector pos in joint space
 	a3vec4 effectorPosInJ;
@@ -330,33 +330,42 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// solver: build an orthonormal basis (Joint-to-object)
 	//	1. direction basis = target - joint position
 	a3vec4 jointPos = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
-	a3vec4* directionBasis;
-	a3real4Diff(directionBasis, &effectorPosInJ, &jointPos);
+	a3vec4 directionBasis;
+	a3real4Diff(directionBasis.v, effectorPosInJ.v, jointPos.v);
 
 	//a3real4x4MakeLookAt()
 	//	2. side basis = known up x direction basis
 	a3vec4 up = {0, 1, 0, 0};
-	a3vec4* sideBasis;
-	a3real3Cross(&sideBasis->rgb, &up.rgb, &directionBasis->rgb);
+	a3vec4 sideBasis;
+	a3real3Cross(sideBasis.v, up.v, directionBasis.v);
 
 
 	//	3. up basis = direction basis x side basis
-	a3vec4* upBasis;
-	a3real3Cross(&upBasis->rgb, &directionBasis->rgb, &sideBasis->rgb);
+	a3vec4 upBasis;
+	a3real3Cross(upBasis.v, directionBasis.v, sideBasis.v);
 	
 	//	4. normalize all
-	a3real4Normalize(directionBasis);
-	a3real4Normalize(sideBasis);
-	
-	a3real4Normalize(upBasis);
+	a3real4Normalize(directionBasis.v);
+	a3real4Normalize(sideBasis.v);
+	a3real4Normalize(upBasis.v);
 
-	a3real4x4* outcome;
+	// Make transform
+	a3mat4 lookAt;
+
+	// -> Basis vectors
+	a3real4Set(lookAt.v0.v, sideBasis.x, sideBasis.y, sideBasis.z, 0);
+	a3real4Set(lookAt.v1.v, upBasis.x, upBasis.y, upBasis.z, 0);
+	a3real4Set(lookAt.v2.v, directionBasis.x, directionBasis.y, directionBasis.z, 0);
+
+	// -> Translation
+	a3real4Set(lookAt.v3.v, jointPos.x, jointPos.y, jointPos.z, 0);
+	
 	//a3real4x4MakeLookAt
 
 
 	// Last step:
 	// resolve every affected joint:
-	// a3kinematicsResolvePostIK()
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, lookAt.m);
 
 	// Use basis functions
 	// Have to make fully up and down edge cases
