@@ -334,17 +334,23 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	//a3real4x4MakeLookAt()
 	//	2. side basis = known up x direction basis
 	a3vec4 up = {0, 1, 0, 0};
-
 	a3vec4* sideBasis;
-	a3real3Cross(sideBasis, &up, directionBasis);
+	a3real3Cross(&sideBasis->rgb, &up.rgb, &directionBasis->rgb);
 
 
 	//	3. up basis = direction basis x side basis
 	a3vec4* upBasis;
-	a3real3Cross(upBasis, directionBasis, sideBasis);
+	a3real3Cross(&upBasis->rgb, &directionBasis->rgb, &sideBasis->rgb);
 	
 	//	4. normalize all
+	a3real4Normalize(directionBasis);
+	a3real4Normalize(sideBasis);
 	
+	a3real4Normalize(upBasis);
+
+	a3real4x4* outcome;
+	//a3real4x4MakeLookAt
+
 
 	// Last step:
 	// resolve every affected joint:
