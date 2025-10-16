@@ -308,19 +308,30 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// transform everything into the space of the skeleton/hierarchy
 	// -> look at target
 
+	a3real4x4 lookAt;
+	
+
+	//a3mat4 rigSpace = sceneGraphState->localSpace->hpose_base
+	//a3real3x3MakeLookAt
+
 	// Main step:
 	// solver: build an orthonormal basis (Joint-to-object)
 	//	1. direction basis = target - joint position
+	
+	//a3real4x4MakeLookAt()
 	//	2. side basis = known up x direction basis
 	//	3. up basis = direction basis x side basis
 	//	4. normalize all
+	
 
 	// Last step:
 	// resolve every affected joint:
-	// a3kinematicsResololvePostIK()
+	// a3kinematicsResolvePostIK()
 
 	// Use basis functions
 	// Have to make fully up and down edge cases
+
+
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
