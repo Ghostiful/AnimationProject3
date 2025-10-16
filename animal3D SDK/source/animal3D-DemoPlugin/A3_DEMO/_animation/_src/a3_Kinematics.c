@@ -329,39 +329,35 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// Main step:
 	// solver: build an orthonormal basis (Joint-to-object)
 	//	1. direction basis = target - joint position
-	a3vec4 jointPos = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
-	a3vec4 directionBasis;
-	a3real4Diff(directionBasis.v, effectorPosInJ.v, jointPos.v);
+	a3vec3 jointPos = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3.xyz;
+	a3vec3 directionBasis;
+	a3real3Diff(directionBasis.v, effectorPosInJ.v, jointPos.v);
 
-	//a3real4x4MakeLookAt()
 	//	2. side basis = known up x direction basis
-	a3vec4 up = {0, 1, 0, 0};
-	a3vec4 sideBasis;
-	a3real3Cross(sideBasis.v, up.v, directionBasis.v);
+	a3vec3 up = {0, 1, 0};
+	a3vec3 sideBasis;
+	a3real3Cross(&sideBasis.x, &up.x, &directionBasis.x);
 
 
 	//	3. up basis = direction basis x side basis
-	a3vec4 upBasis;
-	a3real3Cross(upBasis.v, directionBasis.v, sideBasis.v);
+	a3vec3 upBasis;
+	a3real3Cross(&upBasis.x, &directionBasis.x, &sideBasis.x);
 	
 	//	4. normalize all
-	a3real4Normalize(directionBasis.v);
-	a3real4Normalize(sideBasis.v);
-	a3real4Normalize(upBasis.v);
+	a3real3Normalize(&directionBasis.x);
+	a3real3Normalize(&sideBasis.x);
+	a3real3Normalize(&upBasis.x);
 
 	// Make transform
 	a3mat4 lookAt;
 
 	// -> Basis vectors
-	a3real4Set(lookAt.v0.v, sideBasis.x, sideBasis.y, sideBasis.z, 0);
+	a3real4Set(lookAt.v2.v, sideBasis.x, sideBasis.y, sideBasis.z, 0);
 	a3real4Set(lookAt.v1.v, upBasis.x, upBasis.y, upBasis.z, 0);
-	a3real4Set(lookAt.v2.v, directionBasis.x, directionBasis.y, directionBasis.z, 0);
+	a3real4Set(lookAt.v0.v, directionBasis.x, directionBasis.y, directionBasis.z, 0);
 
 	// -> Translation
-	a3real4Set(lookAt.v3.v, jointPos.x, jointPos.y, jointPos.z, 0);
-	
-	//a3real4x4MakeLookAt
-
+	a3real4Set(lookAt.v3.v, jointPos.x, jointPos.y, jointPos.z, 1);
 
 	// Last step:
 	// resolve every affected joint:
