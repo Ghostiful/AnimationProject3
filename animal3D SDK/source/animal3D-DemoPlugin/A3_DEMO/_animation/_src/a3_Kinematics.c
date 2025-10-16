@@ -265,19 +265,28 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 	a3_HierarchyState const* baseHS, a3_HierarchyPoseGroup const* poseGroup,
 	a3ui32 const nodeIndex, a3real4x4 const j2obj)
 {
-	// post-IK resolution for single affected joint
-	//	-> reassign resolved transform to object-space
-	//	-> compute object-space inverse matrix
-	//	-> compute local-space matrix
-	//	-> restore local-space matrix to pose
-	//	-> deconcatenate base pose
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-	/*a3real4x4Product(activeHS->localSpace->hpose_base[index].transformMat.m,
+	// post-IK resolution for single affected joint
+	//	-> reassign resolved transform to object-space
+	a3real3x3SetReal4x4(activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m, j2obj);
+
+	//	-> compute object-space inverse matrix
+	a3real4x4GetInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, j2obj);
+
+	//	-> compute local-space matrix
+	int parentIndex = activeHS->hierarchy->nodes[nodeIndex].parentIndex;
+	a3real4x4Product(activeHS->localSpace->hpose_base[nodeIndex].transformMat.m,
 		activeHS->objectSpaceInv->hpose_base[parentIndex].transformMat.m,
-		activeHS->objectSpace->hpose_base[index].transformMat.m);*/
+		activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m);
+
+	//	-> restore local-space matrix to pose
+	a3spatialPoseRestore(activeHS->localSpace->hpose_base + nodeIndex, poseGroup->channel, poseGroup->order);
+
+	//	-> deconcatenate base pose
+	a3spatialPoseDeconcat(activeHS->animPose->hpose_base + nodeIndex, activeHS->localSpace->hpose_base + nodeIndex, baseHS->localSpace->hpose_base + nodeIndex);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
