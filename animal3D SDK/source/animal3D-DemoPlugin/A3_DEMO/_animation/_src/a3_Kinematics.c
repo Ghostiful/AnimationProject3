@@ -440,27 +440,43 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 
 	// 4. geometric (Heron's formula) or algebraic (law of cosines)
 	a3f32 area, s;
+
+	// Get distances for limbs
 	a3f32 baseToHingeDist = a3real3Distance(basePosInJ.v, elbowPosInJ.v);
 	a3f32 hingeToEndDist = a3real3Distance(elbowPosInJ.v, effectorPosInJ.v);
-	s = 0.5 * (baseToEndDist + baseToHingeDist + hingeToEndDist);
+
+	// Heron's formula to solve for area
+	s = (a3f32)0.5 * (baseToEndDist + baseToHingeDist + hingeToEndDist);
 	area = s * (s - baseToEndDist) * (s - baseToHingeDist) * (s - hingeToEndDist);
 	area = a3sqrtf(area);
-	a3f32 height = 2 * area / baseToEndDist;
-	a3f32 distToMiddle = baseToHingeDist * baseToHingeDist - height * height;
+
+	// Solve for side lengths of triangle to new elbow pos
+	a3f32 height = (2 * area) / baseToEndDist;
+	a3f32 distToMiddle = (baseToHingeDist * baseToHingeDist) - (height * height);
 	distToMiddle = a3sqrtf(distToMiddle);
 
 	//	-> solves elbow position
+	// direction of base to effector
+	a3vec3 baseNormalized = baseToEnd;
+	a3real3Normalize(baseNormalized.v);
+
+	// direction to elbow from D
+	a3vec3 heightNormalized;
+	a3real3Cross(heightNormalized.v, planeNormal.v, baseNormalized.v);
+
+	// Make vectors in directions with calulated lengths
+	a3vec3 distToMiddleVec, heightVec;
+	a3real3ProductS(distToMiddleVec.v, baseNormalized.v, distToMiddle);
+	a3real3ProductS(heightVec.v, heightNormalized.v, height);
+
+	// Add vectors to get new elbow pos
+	a3vec3 newElbowPosInJ = basePosInJ;
+	a3real3Add(newElbowPosInJ.v, distToMiddleVec.v);
+	a3real3Add(newElbowPosInJ.v, heightVec.v);
+
 	// 5. "look at" solves shoulder and elbow rotations
 	// Geometric solution in slides
-	a3vec3 newElbowPosInJ = basePosInJ;
-	a3vec3 baseNormalized = baseToEnd;
-	a3vec3 heightNormalized, distToMiddleVec, heightVec;
-	a3real3Normalize(baseNormalized.v);
-	a3real3Cross(heightNormalized.v, planeNormal.v, baseNormalized.v);
-	a3real3ProductS(distToMiddleVec.v, baseNormalized.v, distToMiddle);
-	a3real3Add(newElbowPosInJ.v, distToMiddleVec.v);
-	a3real3ProductS(heightVec.v, heightNormalized.v, height);
-	a3real3Add(newElbowPosInJ.v, heightVec.v);
+	
 
 
 	// Last step:
