@@ -424,11 +424,20 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	a3vec3 basePosInJ = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat.v3.xyz;
 
 	// 1. base joint to end effector vector (and distance)
-	
+	a3vec3 baseToEnd;
+	a3real3Diff(baseToEnd.v, effectorPosInJ.v, basePosInJ.v);
 
 	// 2. base joint to pole vector constraint
+	a3vec3 baseToConstraint;
+	a3real3Diff(baseToConstraint.v, constraintPosInJ.v, basePosInJ.v);
+
 	// 3. plane normal = base-to-pole x base-to-end
+	a3vec3 planeNormal;
+	a3real3Cross(&planeNormal.x, &baseToConstraint.x, &baseToEnd.x);
+	a3real3Normalize(&planeNormal.x);
+
 	// 4. geometric (Heron's formula) or algebraic (law of cosines)
+	
 	//	-> solves elbow position
 	// 5. "look at" solves shoulder and elbow rotations
 	// Geometric solution in slides
