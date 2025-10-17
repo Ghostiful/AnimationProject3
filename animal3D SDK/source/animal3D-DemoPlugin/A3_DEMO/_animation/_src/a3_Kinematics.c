@@ -476,8 +476,54 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 
 	// 5. "look at" solves shoulder and elbow rotations
 	// Geometric solution in slides
-	
 
+	// Make new transform for base joint
+	//	-> make basis vectors
+	a3vec3 directionBasis, upBasis, sideBasis;
+	a3real3Diff(directionBasis.v, newElbowPosInJ.v, basePosInJ.v);
+	upBasis = planeNormal;
+	a3real3Cross(sideBasis.v, directionBasis.v, upBasis.v);
+
+	// -> normalize basis vectors
+	a3real3Normalize(&directionBasis.x);
+	a3real3Normalize(&upBasis.x);
+	a3real3Normalize(&sideBasis.x);	
+
+	// -> make transform matrix
+	a3mat4 baseLookAt;
+	a3real4Set(baseLookAt.v0.v, sideBasis.x, sideBasis.y, sideBasis.z, 0);
+	a3real4Set(baseLookAt.v1.v, upBasis.x, upBasis.y, upBasis.z, 0);
+	a3real4Set(baseLookAt.v2.v, directionBasis.x, directionBasis.y, directionBasis.z, 0);
+
+	// -> translation
+	a3real4Set(baseLookAt.v3.v, basePosInJ.x, basePosInJ.y, basePosInJ.z, 1);
+
+	// Resolve base
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_base, baseLookAt.m);
+
+
+	// Make new transform for elbow joint
+	//	-> make basis vectors
+	a3real3Diff(directionBasis.v, effectorPosInJ.v, newElbowPosInJ.v);
+	upBasis = planeNormal;
+	a3real3Cross(sideBasis.v, directionBasis.v, upBasis.v);
+
+	// -> normalize basis vectors
+	a3real3Normalize(&directionBasis.x);
+	a3real3Normalize(&upBasis.x);
+	a3real3Normalize(&sideBasis.x);
+
+	// -> make transform matrix
+	a3mat4 elbowLookAt;
+	a3real4Set(elbowLookAt.v0.v, sideBasis.x, sideBasis.y, sideBasis.z, 0);
+	a3real4Set(elbowLookAt.v1.v, upBasis.x, upBasis.y, upBasis.z, 0);
+	a3real4Set(elbowLookAt.v2.v, directionBasis.x, directionBasis.y, directionBasis.z, 0);
+
+	// -> translation
+	a3real4Set(elbowLookAt.v3.v, newElbowPosInJ.x, newElbowPosInJ.y, newElbowPosInJ.z, 1);
+
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_hinge, elbowLookAt.m);
+	
 
 	// Last step:
 	// resolve every affected joint:
