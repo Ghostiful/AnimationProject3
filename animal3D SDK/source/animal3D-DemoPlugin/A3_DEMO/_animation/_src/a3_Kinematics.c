@@ -274,7 +274,7 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 	a3real4x4SetReal4x4(activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m, j2obj);
 
 	//	-> compute object-space inverse matrix
-	a3real4x4GetInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, j2obj);
+	a3real4x4TransformInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, j2obj); // might need to use a3real4x4TransformInverse
 
 	//	-> compute local-space matrix
 	int parentIndex = activeHS->hierarchy->nodes[nodeIndex].parentIndex;
@@ -400,14 +400,32 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 
 	// First step:
 	// transform everything into the space of the skeleton/hierarchy
+	a3real4x4* worldToJointSpace = &sceneGraphState->localSpaceInv->hpose_base[sceneGraphIndex_hierarchyObj].transformMat.m;
+
 	// -> wrist effector
+	a3vec4 effectorPosInJ;
+	a3real4ProductTransform(effectorPosInJ.v, sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector_end].transformMat.v3.v, *worldToJointSpace);
+
 	// -> pole vector constraint
+	a3vec4 constraintPosInJ;
+	a3real4ProductTransform(constraintPosInJ.v, sceneGraphState->localSpace->hpose_base[sceneGraphIndex_constraint].transformMat.v3.v, *worldToJointSpace);
 
 	// Main step:
 	// solve joint-object for end, hinge, base
 	//	-> end position*
+	a3vec4 wristPosInJ;
+	a3real4ProductTransform(wristPosInJ.v, activeHS->localSpace->hpose_base[hierarchyObjIndex_affected_end].transformMat.v3.v, *worldToJointSpace);
+
 	//  -> hinge position*
+	a3vec4 elbowPosInJ;
+	a3real4ProductTransform(elbowPosInJ.v, activeHS->localSpace->hpose_base[hierarchyObjIndex_affected_hinge].transformMat.v3.v, *worldToJointSpace);
+
+	//	-> base position
+	a3vec3 basePosInJ = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat.v3.xyz;
+
 	// 1. base joint to end effector vector (and distance)
+	
+
 	// 2. base joint to pole vector constraint
 	// 3. plane normal = base-to-pole x base-to-end
 	// 4. geometric (Heron's formula) or algebraic (law of cosines)
