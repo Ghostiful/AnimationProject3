@@ -277,10 +277,7 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 	a3real4x4TransformInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, j2obj); // might need to use a3real4x4TransformInverse
 
 	//	-> compute local-space matrix
-	int parentIndex = activeHS->hierarchy->nodes[nodeIndex].parentIndex;
-	a3real4x4Product(activeHS->localSpace->hpose_base[nodeIndex].transformMat.m,
-		activeHS->objectSpaceInv->hpose_base[parentIndex].transformMat.m,
-		activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m);
+	a3kinematicsSolveInverseSingle(activeHS, nodeIndex, activeHS->hierarchy->nodes[nodeIndex].parentIndex);
 
 	//	-> restore local-space matrix to pose
 	a3spatialPoseRestore(activeHS->localSpace->hpose_base + nodeIndex, *poseGroup->channel, *poseGroup->order);
@@ -363,11 +360,6 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// resolve every affected joint:
 	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, lookAt.m);
 
-	// Use basis functions
-	// Have to make fully up and down edge cases
-
-
-
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
 //-----------------------------------------------------------------------------
@@ -431,7 +423,6 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	// 2. base joint to pole vector constraint
 	a3vec3 baseToConstraint;
 	a3real3Diff(baseToConstraint.v, constraintPosInJ.v, basePosInJ.v);
-	//a3f32 baseToConstraintDist = a3real3Distance(constraintPosInJ.v, basePosInJ.v);
 
 	// 3. plane normal = base-to-pole x base-to-end
 	a3vec3 planeNormal;
@@ -439,20 +430,20 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	a3real3Normalize(&planeNormal.x);
 
 	// 4. geometric (Heron's formula) or algebraic (law of cosines)
-	a3f32 area, s;
+	a3real area, s;
 
 	// Get distances for limbs
-	a3f32 baseToHingeDist = a3real3Distance(basePosInJ.v, elbowPosInJ.v);
-	a3f32 hingeToEndDist = a3real3Distance(elbowPosInJ.v, effectorPosInJ.v);
+	a3real baseToHingeDist = a3real3Distance(basePosInJ.v, elbowPosInJ.v);
+	a3real hingeToEndDist = a3real3Distance(elbowPosInJ.v, effectorPosInJ.v);
 
 	// Heron's formula to solve for area
-	s = (a3f32)0.5 * (baseToEndDist + baseToHingeDist + hingeToEndDist);
-	area = s * (s - baseToEndDist) * (s - baseToHingeDist) * (s - hingeToEndDist);
+	s = (a3real)0.5 * (baseToEndDist + baseToHingeDist + hingeToEndDist);
+	area = s * ((s - baseToEndDist) * (s - baseToHingeDist) * (s - hingeToEndDist));
 	area = a3sqrtf(area);
 
 	// Solve for side lengths of triangle to new elbow pos
-	a3f32 height = (2 * area) / baseToEndDist;
-	a3f32 distToMiddle = (baseToHingeDist * baseToHingeDist) - (height * height);
+	a3real height = (2 * area) / baseToEndDist;
+	a3real distToMiddle = (baseToHingeDist * baseToHingeDist) - (height * height);
 	distToMiddle = a3sqrtf(distToMiddle);
 
 	//	-> solves elbow position
@@ -462,7 +453,7 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 
 	// direction to elbow from D
 	a3vec3 heightNormalized;
-	a3real3Cross(heightNormalized.v, planeNormal.v, baseNormalized.v);
+	a3real3CrossUnit(heightNormalized.v, planeNormal.v, baseNormalized.v);
 
 	// Make vectors in directions with calulated lengths
 	a3vec3 distToMiddleVec, heightVec;
@@ -522,13 +513,7 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	// -> translation
 	a3real4Set(elbowLookAt.v3.v, newElbowPosInJ.x, newElbowPosInJ.y, newElbowPosInJ.z, 1);
 
-	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_hinge, elbowLookAt.m);
-	
-
-	// Last step:
-	// resolve every affected joint:
-	//	-> work from root to leaf
-	// a3kinematicsResolvePostIK
+	//a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_hinge, elbowLookAt.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
