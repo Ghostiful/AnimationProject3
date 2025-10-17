@@ -426,10 +426,12 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	// 1. base joint to end effector vector (and distance)
 	a3vec3 baseToEnd;
 	a3real3Diff(baseToEnd.v, effectorPosInJ.v, basePosInJ.v);
+	a3f32 baseToEndDist = a3real3Distance(effectorPosInJ.v, basePosInJ.v);
 
 	// 2. base joint to pole vector constraint
 	a3vec3 baseToConstraint;
 	a3real3Diff(baseToConstraint.v, constraintPosInJ.v, basePosInJ.v);
+	//a3f32 baseToConstraintDist = a3real3Distance(constraintPosInJ.v, basePosInJ.v);
 
 	// 3. plane normal = base-to-pole x base-to-end
 	a3vec3 planeNormal;
@@ -437,10 +439,29 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	a3real3Normalize(&planeNormal.x);
 
 	// 4. geometric (Heron's formula) or algebraic (law of cosines)
-	
+	a3f32 area, s;
+	a3f32 baseToHingeDist = a3real3Distance(basePosInJ.v, elbowPosInJ.v);
+	a3f32 hingeToEndDist = a3real3Distance(elbowPosInJ.v, effectorPosInJ.v);
+	s = 0.5 * (baseToEndDist + baseToHingeDist + hingeToEndDist);
+	area = s * (s - baseToEndDist) * (s - baseToHingeDist) * (s - hingeToEndDist);
+	area = a3sqrtf(area);
+	a3f32 height = 2 * area / baseToEndDist;
+	a3f32 distToMiddle = baseToHingeDist * baseToHingeDist - height * height;
+	distToMiddle = a3sqrtf(distToMiddle);
+
 	//	-> solves elbow position
 	// 5. "look at" solves shoulder and elbow rotations
 	// Geometric solution in slides
+	a3vec3 newElbowPosInJ = basePosInJ;
+	a3vec3 baseNormalized = baseToEnd;
+	a3vec3 heightNormalized, distToMiddleVec, heightVec;
+	a3real3Normalize(baseNormalized.v);
+	a3real3Cross(heightNormalized.v, planeNormal.v, baseNormalized.v);
+	a3real3ProductS(distToMiddleVec.v, baseNormalized.v, distToMiddle);
+	a3real3Add(newElbowPosInJ.v, distToMiddleVec.v);
+	a3real3ProductS(heightVec.v, heightNormalized.v, height);
+	a3real3Add(newElbowPosInJ.v, heightVec.v);
+
 
 	// Last step:
 	// resolve every affected joint:
